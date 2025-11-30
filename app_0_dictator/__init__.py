@@ -16,7 +16,6 @@ def creating_session(subsession: Subsession):
         p1.game_role = 'Dictator'
         p2.game_role = 'Recipient'
 
-
 class Group(BaseGroup):
     pass
 
