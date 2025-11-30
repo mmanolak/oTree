@@ -1,0 +1,8 @@
+{{ extends 'global/Page.html' }}
+{{ block title }}Round {{ player.round_number }}: Performance Task{{ endblock }}
+{{ block content }}
+    <p>Please complete the slider task below.</p>
+    <!-- oTree will automatically insert the slider task here -->
+    {{ formfields }}
+    <p>Time remaining: <span class="otree-timer"></span></p>
+{{ endblock }}

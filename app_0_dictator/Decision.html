@@ -1,0 +1,7 @@
+{% extends "global/Page.html" %}
+{% block title %}Dictator Game - Round {{ player.round_number }}{% endblock %}
+{% block content %}
+    <p>Your role: <strong>{{ game_role }}</strong></p>
+    {% formfields %}
+    {% next_button %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "global/Page.html" %}
+{% block title %}Round Results{% endblock %}
+{% block content %}
+    <p>The round is complete.</p>
+    <p>Your payoff for this round is: {{ player.payoff }}</p>
+
+    {% if player.round_number < C.NUM_ROUNDS %}
+        <p>Please click Next to continue to the next round of this game.</p>
+    {% else %}
+        <p>You have finished all rounds of this game. Please click Next to proceed.</p>
+    {% endif %}
+    
+    {% next_button %}
+{% endblock %}

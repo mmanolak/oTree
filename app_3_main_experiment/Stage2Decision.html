@@ -1,0 +1,13 @@
+{{ extends 'global/Page.html' }}
+{{ block title }}Final Decision{{ endblock }}
+{{ block content }}
+    <p>
+        Your tenure as Representative has ended.
+    </p>
+    <p>
+        You now have a final choice that will affect the productivity of the next group. This is your "Legacy".
+        Choosing to "Help" or "Sabotage" will cost you {{ C.STAGE_2_COST }} tokens from your total earnings.
+    </p>
+    {{ formfields }}
+    {{ next_button }}
+{{ endblock }}

@@ -1,0 +1,8 @@
+{% extends "global/Page.html" %}
+{% block title %}Your Decision{% endblock %}
+{% block content %}
+    <p>You are the <strong>Responder</strong>.</p>
+    <p>The Proposer has offered you <strong>{{ offer }}</strong> tokens out of {{ C.ULTIMATUM_ENDOWMENT }}.</p>
+    {% formfields %}
+    {% next_button %}
+{% endblock %}

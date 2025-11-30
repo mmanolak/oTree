@@ -1,0 +1,9 @@
+{% extends "global/Page.html" %}
+{% block title %}Money-Burning Game: Your Decision{% endblock %}
+{% block content %}
+    <p>You are the <strong>Destroyer</strong>.</p>
+    <p>You and the other participant (the Target) each have an endowment of <strong>{{ C.JOD_ENDOWMENT }} tokens</strong>.</p>
+    
+    {% formfields %}
+    {% next_button %}
+{% endblock %}

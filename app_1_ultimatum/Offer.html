@@ -1,0 +1,28 @@
+{% extends "global/Page.html" %}
+{% block title %}
+    Ultimatum Game: Make Your Offer
+{% endblock %}
+{% block content %}
+    <p>
+        You are the <strong>Proposer</strong>.
+    </p>
+    <p>
+        You have an endowment of <strong>{{ C.ULTIMATUM_ENDOWMENT }} tokens</strong>. You must decide how many of these tokens to offer to the other player (the Responder).
+    </p>
+    
+    <div class="card bg-light">
+        <div class="card-body">
+            <strong>Rules:</strong>
+            <ul>
+                <li>If the Responder <strong>accepts</strong> your offer, the tokens will be split as you proposed.</li>
+                <li>If the Responder <strong>rejects</strong> your offer, <strong>both of you will receive 0 tokens</strong> for this game.</li>
+            </ul>
+        </div>
+    </div>
+    <br>
+    <p>
+        Please enter your offer below.
+    </p>
+    {% formfields %}
+    {% next_button %}
+{% endblock %}

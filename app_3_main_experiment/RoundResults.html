@@ -1,0 +1,12 @@
+{{ extends 'global/Page.html' }}
+{{ block title }}Round {{ player.round_number }}: Results{{ endblock }}
+{{ block content }}
+    <p>The collective pot for this round was: {{ group.collective_pot }}</p>
+    <p>Your earnings for this round are: {{ player.payoff }}</p>
+
+    {% if session.config.treatment != 'T1' %}
+        <p>The vote to remove the Representative was {{ group.num_remove_votes }} out of {{ C.VOTERS_PER_GROUP }}.</p>
+    {% endif %}
+
+    {{ next_button }}
+{{ endblock }}
