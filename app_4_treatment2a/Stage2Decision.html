@@ -1,0 +1,117 @@
+{% extends "global/Page.html" %}
+{% block title %}Your Final Decision{% endblock %}
+
+{% block content %}
+    <style>
+        .decision-container {
+            display: flex; /* This is the key for horizontal layout */
+            justify-content: center; /* Center the buttons in the container */
+            gap: 20px; /* Adds space between the buttons */
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .decision-button {
+            flex: 1; /* Makes each button take up equal space */
+            max-width: 250px; /* Prevents buttons from getting too wide on large screens */
+            padding: 15px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .decision-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .decision-button.selected {
+            border-color: #000; /* Black border for the selected option */
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        .decision-button h5 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        .decision-button .cost {
+            font-weight: bold;
+        }
+        .decision-button .consequence {
+            font-style: italic;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        /* --- COLOR STYLES --- */
+        #btn-sabotage { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; } /* Red */
+        #btn-neutral { background-color: #e2e3e5; border-color: #d6d8db; color: #383d41; } /* Grey */
+        #btn-help { background-color: #d4edda; border-color: #c3e6cb; color: #155724; } /* Green */
+
+        /* Hide the actual radio button */
+        input[type="radio"] {
+            display: none;
+        }
+    </style>
+
+    <h4>Your Legacy</h4>
+    <p>
+        Your time as Representative is over. You now have one final, anonymous decision to make.
+        This decision will affect the productivity of the group that comes after you.
+        Please choose one of the three options below.
+    </p>
+
+    <hr>
+
+    <!-- This form tag is important for submission -->
+    <form>
+        <div class="decision-container">
+            
+            <!-- Sabotage Button (Red) -->
+            <label id="btn-sabotage" class="decision-button">
+                <input type="radio" name="stage2_decision" value="1" required>
+                <h5>Sabotage</h5>
+                <p class="cost">Cost to you: {{ C.STAGE_2_COST }} points</p>
+                <p class="consequence">The next group's earnings will be HALVED.</p>
+            </label>
+
+            <!-- Neutral Button (Grey) -->
+            <label id="btn-neutral" class="decision-button">
+                <input type="radio" name="stage2_decision" value="0" required>
+                <h5>Remain Neutral</h5>
+                <p class="cost">Cost to you: 0 points</p>
+                <p class="consequence">The next group's earnings will be UNCHANGED.</p>
+            </label>
+
+            <!-- Help Button (Green) -->
+            <label id="btn-help" class="decision-button">
+                <input type="radio" name="stage2_decision" value="2" required>
+                <h5>Help</h5>
+                <p class="cost">Cost to you: {{ C.STAGE_2_COST }} points</p>
+                <p class="consequence">The next group's earnings will be INCREASED by 50%.</p>
+            </label>
+
+        </div>
+        
+        {% next_button %}
+    </form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // This script adds the 'selected' class for a visual highlight
+    const radios = document.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Remove 'selected' from all buttons
+            document.querySelectorAll('.decision-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            // Add 'selected' to the parent label of the checked radio
+            if (this.checked) {
+                this.parentElement.classList.add('selected');
+            }
+        });
+    });
+</script>
+{% endblock %}

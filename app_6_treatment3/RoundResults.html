@@ -1,0 +1,36 @@
+{% extends "global/Page.html" %}
+{% block title %}Results for Round {{ player.round_number }}{% endblock %}
+
+{% block content %}
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Round Performance Summary</h5>
+
+            <table class="table">
+                <tr>
+                    <td>Your personal score:</td>
+                    <td>{{ my_score }}</td>
+                </tr>
+                <tr>
+                    <td>The Representative's score:</td>
+                    <td>{{ representative_score }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Collective Pot Generated this Round:</strong></td>
+                    <td><strong>{{ collective_pot }}</strong></td>
+                </tr>
+            </table>
+
+            {% if player.is_representative %}
+                <p>As the Representative, you earned a fixed salary of {{ C.REP_SALARY }} for this round.</p>
+            {% else %}
+                <p>As a Voter, your share of the collective pot for this round is {{ player.payoff }}.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <br>
+    {% next_button %}
+
+{% endblock %}
