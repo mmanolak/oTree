@@ -4,51 +4,54 @@ SESSION_CONFIG_DEFAULTS = dict(
 )
 
 PARTICIPANT_FIELDS = [
-    'display_name',
-    'dictator_send',
-    'jod_destroy',
-    'ultimatum_offer',
-    'ultimatum_accepted',
+    'dictator_send_r1', 'dictator_send_r2', 'dictator_send_r3',
+    'ultimatum_offer_r1', 'ultimatum_offer_r2', 'ultimatum_offer_r3',
+    'ultimatum_accepted_r1', 'ultimatum_accepted_r2', 'ultimatum_accepted_r3',
+    'jod_destroy_r1', 'jod_destroy_r2', 'jod_destroy_r3',
+    'is_representative',
+    'game_role',
 ]
-
 
 SESSION_CONFIGS = [
     dict(
-        name='Full_Game_the_Lame_Duck_Experiment',
+        name='Full_Game_Lame_Duck_Experiment',
         display_name="Full Game - Lame Duck Experiment",
-        num_demo_participants=4,
+        num_demo_participants=8,
         app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_main_experiment'],
         treatment='T3'
     ),
     dict(
-        name='DEBUG_Dictator_Game_Check',
-        display_name="App 0 Ultimatum Game Check",
-        num_demo_participants=4,
+        name='debug_dictator',
+        display_name="DEBUG: Dictator Game Only",
+        num_demo_participants=2,
         app_sequence=['app_0_dictator'],
-        treatment='T1'
     ),
     dict(
-        name='DEBUG_Ultimatum_Game_Check',
-        display_name="App 1 Ultimatum Game Check",
-        num_demo_participants=4,
+        name='debug_ultimatum',
+        display_name="DEBUG: Ultimatum Game Only",
+        num_demo_participants=2,
         app_sequence=['app_1_ultimatum'],
-        treatment='T2a'
     ),
     dict(
-        name='DEBUG_JoD_Game_Check',
-        display_name="App 2 Joy of Destruction Game Check",
-        num_demo_participants=4,
+        name='debug_jod',
+        display_name="DEBUG: Joy of Destruction Only",
+        num_demo_participants=2,
         app_sequence=['app_2_jod'],
-        treatment='T2b'
     ),
     dict(
-        name='DEBUG_main_experiment',
+        name='debug_main_experiment_T1',
         display_name="DEBUG: Main Experiment Only (T1 Rules)",
         num_demo_participants=4,
-        # This is the key change: only list the app you want to test.
         app_sequence=['app_3_main_experiment'],
-        # We'll use T1 rules for this test session.
         treatment='T1'
+    ),
+    dict(
+        name='DEV_Full_Game',
+        display_name="DEV MODE: Full Game (T3 Rules, Fast Timers)",
+        num_demo_participants=8,
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_main_experiment'],
+        treatment='T3',
+        use_browser_bots=True 
     ),
 ]
 
