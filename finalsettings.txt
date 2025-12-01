@@ -14,41 +14,32 @@ PARTICIPANT_FIELDS = [
 
 SESSION_CONFIGS = [
     dict(
-        name='Full_Game_the_Lame_Duck_Experiment',
-        display_name="Full Game - Lame Duck Experiment",
+        name='T1_NoVote',
+        display_name="Treatment 1 (No Vote Term Limit)",
         num_demo_participants=4,
         app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_main_experiment'],
-        treatment='T3'
-    ),
-    dict(
-        name='DEBUG_Dictator_Game_Check',
-        display_name="App 0 Ultimatum Game Check",
-        num_demo_participants=4,
-        app_sequence=['app_0_dictator'],
         treatment='T1'
     ),
     dict(
-        name='DEBUG_Ultimatum_Game_Check',
-        display_name="App 1 Ultimatum Game Check",
+        name='T2a_VoteOut',
+        display_name="Treatment 2a (Removal by Popular Vote)",
         num_demo_participants=4,
-        app_sequence=['app_1_ultimatum'],
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_main_experiment'],
         treatment='T2a'
     ),
     dict(
-        name='DEBUG_JoD_Game_Check',
-        display_name="App 2 Joy of Destruction Game Check",
+        name='T2b_DumbLuck',
+        display_name="Treatment 2b (Probabilistic Removal)",
         num_demo_participants=4,
-        app_sequence=['app_2_jod'],
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_main_experiment'],
         treatment='T2b'
     ),
     dict(
-        name='DEBUG_main_experiment',
-        display_name="DEBUG: Main Experiment Only (T1 Rules)",
+        name='T3_LameDuck',
+        display_name="Treatment 3 (Removal by Term Limit)",
         num_demo_participants=4,
-        # This is the key change: only list the app you want to test.
-        app_sequence=['app_3_main_experiment'],
-        # We'll use T1 rules for this test session.
-        treatment='T1'
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_main_experiment'],
+        treatment='T3'
     ),
 ]
 

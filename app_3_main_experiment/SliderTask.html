@@ -1,8 +1,138 @@
-{{ extends 'global/Page.html' }}
-{{ block title }}Round {{ player.round_number }}: Performance Task{{ endblock }}
-{{ block content }}
-    <p>Please complete the slider task below.</p>
-    <!-- oTree will automatically insert the slider task here -->
-    {{ formfields }}
+{% extends "global/Page.html" %}
+{% block title %}Round {{ player.round_number }}: Performance Task{% endblock %}
+
+{% block content %}
+    <style>
+        .task-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .goal-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #007bff; /* Blue */
+        }
+        .current-number {
+            font-size: 1.8em;
+            font-weight: normal;
+            color: #333;
+            height: 30px; /* Reserve space to prevent layout shift */
+        }
+        .slider {
+            width: 100%;
+            margin: 20px 0;
+        }
+        .feedback {
+            font-size: 1.5em;
+            font-weight: bold;
+            height: 30px; /* Reserve space */
+            margin-top: 10px;
+        }
+        .feedback.success { color: black; }
+        .feedback.fail { color: black; }
+        .score-display {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+    </style>
+
+    <div class="score-display">
+        <strong>Your Role: {{ player.game_role }}</strong><br>
+        <strong>Your Score This Round: <span id="total-score">0</span></strong>
+    </div>
+
+    <div class="task-container">
+        <p>Your task is to set the slider to the goal number. Your answer is submitted when you release the slider.</p>
+        
+        <div id="slider-area">
+            <div>Goal Number</div>
+            <div id="goal-number" class="goal-number">--</div>
+            
+            <input type="range" min="1" max="50" value="25" class="slider" id="slider">
+            
+            <div>Current Number</div>
+            <div id="current-number" class="current-number">25</div>
+            
+            <!-- The submit button has been removed -->
+            
+            <div id="feedback-area" class="feedback"></div>
+        </div>
+    </div>
+
+    <!-- Hidden oTree form field -->
+    <input type="hidden" name="slider_score" id="id_slider_score" value="0"/>
+
     <p>Time remaining: <span class="otree-timer"></span></p>
-{{ endblock }}
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const goalNumberEl = document.getElementById('goal-number');
+            const currentNumberEl = document.getElementById('current-number');
+            const sliderEl = document.getElementById('slider');
+            const feedbackEl = document.getElementById('feedback-area');
+            const totalScoreEl = document.getElementById('total-score');
+            const oTreeScoreInput = document.getElementById('id_slider_score');
+
+            let currentGoal = 0;
+            let score = 0;
+
+            function generateNewSlider() {
+                feedbackEl.textContent = '';
+                feedbackEl.className = 'feedback';
+                
+                currentGoal = Math.floor(Math.random() * 50) + 1;
+                goalNumberEl.textContent = currentGoal;
+                
+                sliderEl.value = Math.floor(Math.random() * 50) + 1;
+                currentNumberEl.textContent = sliderEl.value;
+                
+                sliderEl.disabled = false;
+            }
+
+            // This 'input' event updates the number as you drag the slider
+            sliderEl.addEventListener('input', function () {
+                currentNumberEl.textContent = sliderEl.value;
+            });
+
+            // This 'change' event fires when you RELEASE the slider, submitting the answer
+            sliderEl.addEventListener('change', function () {
+                const currentValue = parseInt(sliderEl.value);
+                
+                // Disable the slider immediately to lock in the answer
+                sliderEl.disabled = true;
+
+                if (currentValue === currentGoal) {
+                    score++;
+                    feedbackEl.textContent = 'Past Slide Result: Success';
+                    feedbackEl.classList.add('success');
+                } else {
+                    feedbackEl.textContent = 'Past Slide Result: Fail';
+                    feedbackEl.classList.add('fail');
+                }
+
+                // Update score displays
+                totalScoreEl.textContent = score;
+                oTreeScoreInput.value = score;
+
+                // After a short delay, generate the next slider
+                setTimeout(generateNewSlider, 1200); // 1.2 second delay
+            });
+
+            // Start the first slider
+            generateNewSlider();
+        });
+    </script>
+{% endblock %}
