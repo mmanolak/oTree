@@ -1,0 +1,16 @@
+{% extends "global/Page.html" %}
+{% block title %}Vote Results{% endblock %}
+{% block content %}
+    {% if active_group %}
+        <p>The vote is complete.</p>
+        <p>Number of votes to remove: {{ active_group.num_remove_votes }}</p>
+        {% if active_group.num_remove_votes >= 2 %}
+            <p>The Representative has been removed.</p>
+        {% else %}
+            <p>The Representative has been retained.</p>
+        {% endif %}
+    {% else %}
+        <p>There is no active game.</p>
+    {% endif %}
+    {% next_button %}
+{% endblock %}

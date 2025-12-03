@@ -1,0 +1,15 @@
+{% extends "global/Page.html" %}
+{% block title %}Please Wait{% endblock %}
+{% block content %}
+
+    <p>Please wait for the current round to be completed by the active players.</p>
+
+    <p>Your current role:
+        {% if player.game_state == 0 %}
+            In the Representative Pool
+        {% elif player.game_state == 3 %}
+            Removed Representative
+        {% endif %}
+    </p>
+
+{% endblock %}

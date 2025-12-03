@@ -1,8 +1,11 @@
-{{ extends 'global/Page.html' }}
-{{ block title }}Round {{ player.round_number }}: Vote{{ endblock }}
-{{ block content }}
-    <p>The collective pot for this round is {{ group.collective_pot }}.</p>
-    <p>As a Voter, you will now vote on whether to retain or remove the Representative.</p>
-    {{ formfields }}
-    {{ next_button }}
-{{ endblock }}
+{% extends "global/Page.html" %}
+{% block title %}Vote{% endblock %}
+{% block content %}
+
+    <p>You are a Voter. The current Representative is Participant {{ representative_pid }}.</p>
+    <p>Do you vote to remove the Representative?</p>
+
+    {% formfields %}
+    {% next_button %}
+
+{% endblock %}

@@ -72,6 +72,12 @@ SESSION_CONFIGS = [
         app_sequence=['app_6_treatment3'],
         slider_timeout=5,
     ),
+    dict(
+        name='debug_rotation',
+        display_name="DEBUG: App 7 - Rotation Mechanic Only",
+        num_demo_participants=5,
+        app_sequence=['app_7_rotation'],
+    ),
 ]
 
 # --- Standard oTree Settings ---
@@ -85,5 +91,5 @@ SECRET_KEY = 'a-secret-key-for-testing'
 INSTALLED_APPS = [
     'otree',
     'app_0_dictator', 'app_1_ultimatum', 'app_2_jod',
-    'app_3_treatment1', 'app_4_treatment2a', 'app_5_treatment2b', 'app_6_treatment3',
+    'app_3_treatment1', 'app_4_treatment2a', 'app_5_treatment2b', 'app_6_treatment3', 'app_7_rotation'
 ]

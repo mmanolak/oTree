@@ -1,0 +1,32 @@
+{% extends "global/Page.html" %}
+{% block title %}Round {{ player.round_number }} Status{% endblock %}
+{% block content %}
+
+    <!-- This section now shows the player's permanent PID and Label -->
+    <div style="border: 2px solid #007bff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+        <h4>Your Identity</h4>
+        <p>
+            Your PID is <strong>{{ player.participant.id }}</strong>; your participant label is: <strong>{{ player.participant.label }}</strong>.
+        </p>
+    </div>
+
+    <hr>
+
+    <!-- This section shows the authoritative game state from session.vars -->
+    <h4>Current Game State</h4>
+    <p>
+        The 3 permanent Voters are Participants (by PID): {{ session.vars.voter_pids }}
+    </p>
+    <p>
+        The current Representative is (by PID): <strong>{{ current_rep_pid }}</strong>
+    </p>
+    <p>
+        The Representative Pool is (by PID): {{ rep_pool_pids }}
+    </p>
+    <p>
+        Removed Representatives are (by PID): {{ session.vars.removed_pids }}
+    </p>
+    
+    {% next_button %}
+
+{% endblock %}

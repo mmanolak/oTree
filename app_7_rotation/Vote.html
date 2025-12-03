@@ -1,0 +1,7 @@
+{% extends "global/Page.html" %}
+{% block title %}Vote{% endblock %}
+{% block content %}
+    <p>You are a Voter. The current Representative is Participant {{ session.vars.current_rep_pid }}.</p>
+    {% formfields %}
+    {% next_button %}
+{% endblock %}

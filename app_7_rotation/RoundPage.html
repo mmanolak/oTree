@@ -1,0 +1,17 @@
+{% extends "global/Page.html" %}
+{% block title %}Round {{ player.round_number }}{% endblock %}
+{% block content %}
+    <p>Your Participant ID: {{ player.participant.id }}</p>
+    <p>Your current role:
+        {% if player.game_state == 0 %} In the Representative Pool
+        {% elif player.game_state == 1 %} Voter
+        {% elif player.game_state == 2 %} Representative
+        {% elif player.game_state == 3 %} Removed
+        {% endif %}
+    </p>
+    <hr>
+    <h4>Game State:</h4>
+    <p>Current Representative: Participant {{ current_rep_pid }}</p>
+    <p>Representative Pool: {{ rep_pool_pids }}</p>
+    {% next_button %}
+{% endblock %}

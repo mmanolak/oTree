@@ -1,0 +1,73 @@
+{% extends "global/Page.html" %}
+{% block title %}Round {{ player.round_number }}: Performance Task{% endblock %}
+
+{% block content %}
+    <style>
+        .task-container { max-width: 500px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; text-align: center; }
+        .goal-number { font-size: 2.5em; font-weight: bold; color: #007bff; }
+        .current-number { font-size: 1.8em; height: 30px; }
+        .slider { width: 100%; margin: 20px 0; }
+        .feedback { font-size: 1.5em; font-weight: bold; height: 30px; margin-top: 10px; }
+        .score-display { position: fixed; top: 80px; right: 20px; padding: 10px 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
+    </style>
+
+    <div class="score-display">
+        <strong>Your Score: <span id="total-score">0</span></strong>
+    </div>
+
+    <div class="task-container">
+        <p>Set the slider to the goal number. Your answer is submitted when you release the slider.</p>
+        <div id="slider-area">
+            <div>Goal Number</div>
+            <div id="goal-number" class="goal-number">--</div>
+            <input type="range" min="1" max="50" value="25" class="slider" id="slider">
+            <div>Current Number</div>
+            <div id="current-number" class="current-number">25</div>
+            <div id="feedback-area" class="feedback"></div>
+        </div>
+    </div>
+
+    <input type="hidden" name="slider_score" id="id_slider_score" value="0"/>
+    <p>Time remaining: <span class="otree-timer"></span></p>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const goalNumberEl = document.getElementById('goal-number');
+            const currentNumberEl = document.getElementById('current-number');
+            const sliderEl = document.getElementById('slider');
+            const feedbackEl = document.getElementById('feedback-area');
+            const totalScoreEl = document.getElementById('total-score');
+            const oTreeScoreInput = document.getElementById('id_slider_score');
+            let currentGoal = 0;
+            let score = 0;
+
+            function generateNewSlider() {
+                feedbackEl.textContent = '';
+                currentGoal = Math.floor(Math.random() * 50) + 1;
+                goalNumberEl.textContent = currentGoal;
+                sliderEl.value = Math.floor(Math.random() * 50) + 1;
+                currentNumberEl.textContent = sliderEl.value;
+                sliderEl.disabled = false;
+            }
+
+            sliderEl.addEventListener('input', function () { currentNumberEl.textContent = sliderEl.value; });
+
+            sliderEl.addEventListener('change', function () {
+                const currentValue = parseInt(sliderEl.value);
+                sliderEl.disabled = true;
+                if (currentValue === currentGoal) {
+                    score++;
+                    feedbackEl.textContent = 'Success';
+                } else {
+                    feedbackEl.textContent = 'Fail';
+                }
+                totalScoreEl.textContent = score;
+                oTreeScoreInput.value = score;
+                setTimeout(generateNewSlider, 1200);
+            });
+            generateNewSlider();
+        });
+    </script>
+{% endblock %}
