@@ -47,7 +47,13 @@
     </style>
 
     <div class="score-display">
-        <strong>Your Role: {{ player.game_role }}</strong><br>
+        <strong>Your Role: 
+            {% if player.game_state == 1 %}
+                Voter
+            {% elif player.game_state == 2 %}
+                Representative
+            {% endif %}
+        </strong><br>
         <strong>Your Score This Round: <span id="total-score">0</span></strong>
     </div>
 

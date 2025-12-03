@@ -2,7 +2,7 @@ from otree.api import *
 import random
 
 class C(BaseConstants):
-    NAME_IN_URL = 'app_3_treatment1' 
+    NAME_IN_URL = 'app_3_treatment1'
     PLAYERS_PER_GROUP = None
     NUM_ROUNDS = 20
     VOTERS_PER_GROUP = 3
@@ -11,9 +11,8 @@ class C(BaseConstants):
     VOTER_SUCCESS_PAYOFF = 5
     REP_SUCCESS_PAYOFF = 50
     TERM_LENGTH = 3
-    START_OF_INDEFINITE_HORIZON = 6
+    START_OF_INDEFINITE_HORIZON = 7
     CONTINUATION_PROB = 0.80
-    CHAOS_PROB = 0.40
 
 class Subsession(BaseSubsession):
     pass
@@ -32,8 +31,7 @@ def creating_session(subsession: Subsession):
         session.vars['removed_reps_info'] = []
         session.vars['term_round'] = 0
         if session.vars['rep_pool_pids']:
-            first_rep_pid = session.vars['rep_pool_pids'].pop(0)
-            session.vars['current_rep_pid'] = first_rep_pid
+            session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
             session.vars['term_round'] = 1
         else:
             session.vars['game_over'] = True
@@ -45,13 +43,13 @@ def creating_session(subsession: Subsession):
         pid = p.participant.id
         if pid in voter_pids:
             p.game_role = "Voter"
-            p.is_representative = False
+            p.is_representative = False # <-- THE FIX
         elif pid == current_rep_pid:
             p.game_role = "Representative"
-            p.is_representative = True
+            p.is_representative = True # <-- THE FIX
         else:
             p.game_role = "Inactive"
-            p.is_representative = False
+            p.is_representative = False # <-- THE FIX
     
     active_group = [p for p in subsession.get_players() if p.game_role in ["Voter", "Representative"]]
     inactive_players = [p for p in subsession.get_players() if p.game_role == "Inactive"]
@@ -73,9 +71,7 @@ class Player(BasePlayer):
     removal_mechanism = models.StringField()
     stage2_decision = models.IntegerField(widget=widgets.RadioSelect, choices=[[1, 'Sabotage'], [2, 'Help'], [0, 'Neutral']])
 
-def get_voters(group: Group):
-    return [p for p in group.get_players() if p.game_role == 'Voter']
-
+def get_voters(group: Group): return [p for p in group.get_players() if p.game_role == 'Voter']
 def get_representative(group: Group):
     for p in group.get_players():
         if p.game_role == 'Representative': return p
@@ -83,56 +79,43 @@ def get_representative(group: Group):
 
 class Introduction(Page):
     @staticmethod
-    def is_displayed(player: Player):
-        return player.round_number == 1
+    def is_displayed(player: Player): return player.round_number == 1
 
 class PoolWaitPage(Page):
     @staticmethod
-    def is_displayed(player: Player):
-        return not player.session.vars['game_over'] and player.game_role == "Inactive"
+    def is_displayed(player: Player): return not player.session.vars['game_over'] and player.game_role == "Inactive"
 
 class SliderTask(Page):
     form_model = 'player'
     form_fields = ['slider_score']
     @staticmethod
-    def get_timeout_seconds(player: Player):
-        return player.session.config.get('slider_timeout', 60)
+    def get_timeout_seconds(player: Player): return player.session.config.get('slider_timeout', 60)
     @staticmethod
-    def is_displayed(player: Player):
-        return not player.session.vars['game_over'] and player.game_role in ["Voter", "Representative"]
+    def is_displayed(player: Player): return not player.session.vars['game_over'] and player.game_role in ["Voter", "Representative"]
 
 class ResultsWaitPage(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         if not get_representative(group): return
-        rep = get_representative(group)
-        voters = get_voters(group)
+        rep, voters = get_representative(group), get_voters(group)
         pot = (rep.slider_score * C.REP_SUCCESS_PAYOFF + sum(p.slider_score for p in voters) * C.VOTER_SUCCESS_PAYOFF)
         group.collective_pot = pot
         for p in voters: p.payoff = pot / C.VOTERS_PER_GROUP
         rep.payoff = C.REP_SALARY
 
 class Vote(Page):
-    # In T1, voters never see this page.
     @staticmethod
-    def is_displayed(player: Player):
-        return False
+    def is_displayed(player: Player): return False
 
 class VoteWaitPage(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         if not get_representative(group): return
-        session = group.session
-        rep = get_representative(group)
-        
-        is_removed = False
+        session, rep = group.session, get_representative(group)
         if session.vars['term_round'] >= C.TERM_LENGTH:
-            is_removed = True
             rep.was_removed = True
             rep.removal_mechanism = 'no_vote_term_limit'
-            session.vars['removed_reps_info'].append({'participant_id': rep.participant.id})
-        
-        if is_removed:
+            session.vars['removed_reps_info'].append({'participant_id': rep.participant.id, 'mechanism': 'no_vote_term_limit'})
             if session.vars['rep_pool_pids']:
                 session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
                 session.vars['term_round'] = 1
@@ -141,20 +124,13 @@ class VoteWaitPage(WaitPage):
         else:
             session.vars['term_round'] += 1
 
-class Stage2Decision(Page):
-    form_model = 'player'
-    form_fields = ['stage2_decision']
+class RoundResults(Page):
     @staticmethod
-    def is_displayed(player: Player):
-        # In T1, only show this if they were removed for the specific T1 reason.
-        if player.round_number != C.NUM_ROUNDS: return False
-        my_removal_info = next((info for info in player.session.vars['removed_reps_info'] if info['participant_id'] == player.participant.id), None)
-        if not my_removal_info: return False
-        # This check is now redundant because only T1 removals are recorded, but it's good practice.
-        return get_representative(player.group).removal_mechanism == 'no_vote_term_limit'
+    def is_displayed(player: Player): return not player.session.vars['game_over'] and player.game_role in ["Voter", "Representative"]
     @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        if player.stage2_decision in [1, 2]: player.payoff -= C.STAGE_2_COST
+    def vars_for_template(player: Player):
+        rep = get_representative(player.group)
+        return {'my_score': player.slider_score, 'collective_pot': player.group.collective_pot, 'representative_score': rep.slider_score if rep else 0}
 
 class EndOfRoundWaitPage(WaitPage):
     wait_for_all_groups = True
@@ -165,34 +141,24 @@ class EndOfRoundWaitPage(WaitPage):
         if subsession.round_number >= C.START_OF_INDEFINITE_HORIZON and random.random() > C.CONTINUATION_PROB:
             session.vars['game_over'] = True; session.vars['game_over_reason'] = "The game ended randomly."
         if subsession.round_number >= C.NUM_ROUNDS:
-            session.vars['game_over'] = True; session.vars['game_over_reason'] = "The maximum number of rounds was reached."
-
-class RoundResults(Page):
-    @staticmethod
-    def is_displayed(player: Player):
-        return not player.session.vars['game_over'] and player.game_role in ["Voter", "Representative"]
-    @staticmethod
-    def vars_for_template(player: Player):
-        group = player.group
-        rep = get_representative(group)
-        return {'representative_score': rep.slider_score if rep else 0, 'my_score': player.slider_score, 'collective_pot': group.collective_pot}
+            session.vars['game_over'] = True; session.vars['game_over_reason'] = "Max rounds reached."
 
 class Stage2Decision(Page):
     form_model = 'player'
     form_fields = ['stage2_decision']
     @staticmethod
     def is_displayed(player: Player):
-        if player.round_number != C.NUM_ROUNDS: return False
+        if not player.session.vars['game_over']: return False
         my_removal_info = next((info for info in player.session.vars['removed_reps_info'] if info['participant_id'] == player.participant.id), None)
-        return my_removal_info is not None
+        if not my_removal_info: return False
+        return my_removal_info['mechanism'] == 'no_vote_term_limit'
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
         if player.stage2_decision in [1, 2]: player.payoff -= C.STAGE_2_COST
 
 class FinalResults(Page):
     @staticmethod
-    def is_displayed(player: Player):
-        return player.round_number == C.NUM_ROUNDS
+    def is_displayed(player: Player): return player.session.vars['game_over']
     @staticmethod
     def vars_for_template(player: Player):
         return {'reason': player.session.vars.get('game_over_reason', 'The experiment has concluded.')}
