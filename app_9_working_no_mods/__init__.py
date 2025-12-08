@@ -1,7 +1,7 @@
 from otree.api import *
 import random
 
-doc = 'Treatment 2a: Dynamic rotation with performance, payoffs, and immediate legacy decision with lasting effects.'
+doc = 'Treatment 2a: Representatives who are voted out make an immediate final decision.'
 
 class C(BaseConstants):
     NAME_IN_URL = 'app_4_treatment2a'
@@ -10,9 +10,8 @@ class C(BaseConstants):
     NUM_VOTERS = 3
     STAGE_2_COST = 50
     REP_SALARY = 150
-    # These are now the BASE rates
-    BASE_VOTER_SUCCESS_PAYOFF = 5
-    BASE_REP_SUCCESS_PAYOFF = 50
+    VOTER_SUCCESS_PAYOFF = 5
+    REP_SUCCESS_PAYOFF = 50
 
 class Subsession(BaseSubsession):
     rep_was_removed_this_round = models.BooleanField(initial=False)
@@ -35,15 +34,11 @@ def creating_session(subsession: Subsession):
         else:
             session.vars['current_rep_pid'] = None
     
-    # Set group matrix in every round. Roles will be assigned in the first wait page.
-    set_group_matrix_from_vars(subsession)
+    # NOTE: Role assignment has been REMOVED from here.
 
 class Group(BaseGroup):
     num_remove_votes = models.IntegerField(initial=0)
     collective_pot = models.FloatField(initial=0)
-    # Store the multipliers for this round's group
-    voter_multiplier = models.FloatField(initial=C.BASE_VOTER_SUCCESS_PAYOFF)
-    rep_multiplier = models.FloatField(initial=C.BASE_REP_SUCCESS_PAYOFF)
 
 class Player(BasePlayer):
     vote_choice = models.BooleanField(label='Do you want to replace the current representative?', choices=[[True, 'Replace'], [False, 'Keep']], widget=widgets.RadioSelect)
@@ -52,49 +47,38 @@ class Player(BasePlayer):
     stage2_decision = models.IntegerField(label="Make your legacy decision.", choices=[[1, 'Sabotage'],[0, 'Neutral'],[2, 'Help']])
     slider_score = models.IntegerField(initial=0)
 
-# --- Custom Grouping Function ---
-def set_group_matrix_from_vars(subsession: Subsession):
-    voter_pids = subsession.session.vars['voter_pids']
-    current_rep_pid = subsession.session.vars.get('current_rep_pid')
-    
-    active_players = []
-    inactive_players = []
-    for p in subsession.get_players():
-        if p.participant.id in voter_pids or p.participant.id == current_rep_pid:
-            active_players.append(p)
-        else:
-            inactive_players.append(p)
-            
-    group_matrix = []
-    if active_players: group_matrix.append(active_players)
-    for p in inactive_players: group_matrix.append([p])
-    subsession.set_group_matrix(group_matrix)
-
 # --- PAGES ---
+
 class InitializeRoundWaitPage(WaitPage):
+    """NEW Wait Page. This is now the first page of every round."""
     wait_for_all_groups = True
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
+        # This logic now runs AFTER the previous round's EndOfRoundWaitPage is complete.
         voter_pids = subsession.session.vars['voter_pids']
         current_rep_pid = subsession.session.vars.get('current_rep_pid')
+        
         for p in subsession.get_players():
             pid = p.participant.id
-            if pid in voter_pids: p.is_voter = True; p.is_active_rep = False
-            elif pid == current_rep_pid: p.is_voter = False; p.is_active_rep = True
-            else: p.is_voter = False; p.is_active_rep = False
-        
-        active_group = next((g for g in subsession.get_groups() if len(g.get_players()) > 1), None)
-        if active_group:
-            if subsession.round_number > 1:
-                prev_group = active_group.in_round(subsession.round_number - 1)
-                active_group.voter_multiplier = prev_group.voter_multiplier
-                active_group.rep_multiplier = prev_group.rep_multiplier
+            if pid in voter_pids:
+                p.is_voter = True
+                p.is_active_rep = False
+            elif pid == current_rep_pid:
+                p.is_voter = False
+                p.is_active_rep = True
+            else:
+                p.is_voter = False
+                p.is_active_rep = False
+
+        # Grouping logic is also moved here to use the newly assigned roles.
+        active_players = [p for p in subsession.get_players() if p.is_voter or p.is_active_rep]
+        inactive_players = [p for p in subsession.get_players() if not (p.is_voter or p.is_active_rep)]
+        group_matrix = []
+        if active_players: group_matrix.append(active_players)
+        for p in inactive_players: group_matrix.append([p])
+        subsession.set_group_matrix(group_matrix)
 
 class Status(Page):
-    @staticmethod
-    def is_displayed(player: Player):
-        return player.session.vars.get('current_rep_pid') is not None
-        
     @staticmethod
     def vars_for_template(player: Player):
         return {
@@ -104,23 +88,14 @@ class Status(Page):
             'removed_pids': player.session.vars['removed_pids'],
         }
 
+# ... (SliderTask, PayoffWaitPage, VotingPage, SyncAfterVote, Stage2Decision, PostDecisionWaitPage, ResultsPage are all correct and unchanged) ...
 class SliderTask(Page):
     form_model = 'player'
     form_fields = ['slider_score']
-    @staticmethod
-    def get_timeout_seconds(player: Player):
-        return player.session.config.get('slider_task_timeout', 60)
-    @staticmethod
-    def vars_for_template(player: Player):
-        if player.is_active_rep:
-            contribution_rate = player.group.rep_multiplier
-        else:
-            contribution_rate = player.group.voter_multiplier
-        return {'contribution_rate': contribution_rate}
+    timeout_seconds = 60
     @staticmethod
     def is_displayed(player: Player):
         return (player.is_voter or player.is_active_rep) and player.session.vars.get('current_rep_pid') is not None
-
 class PayoffWaitPage(WaitPage):
     wait_for_all_groups = True
     @staticmethod
@@ -133,12 +108,10 @@ class PayoffWaitPage(WaitPage):
             rep = next((p for p in active_group.get_players() if p.is_active_rep), None)
             voters = [p for p in active_group.get_players() if p.is_voter]
             if rep and voters:
-                pot = (rep.slider_score * active_group.rep_multiplier + 
-                       sum(p.slider_score for p in voters) * active_group.voter_multiplier)
+                pot = (rep.slider_score * C.REP_SUCCESS_PAYOFF + sum(p.slider_score for p in voters) * C.VOTER_SUCCESS_PAYOFF)
                 active_group.collective_pot = pot
                 for p in voters: p.payoff = pot / C.NUM_VOTERS
                 rep.payoff = C.REP_SALARY
-
 class VotingPage(Page):
     form_model = 'player'
     form_fields = ['vote_choice']
@@ -148,7 +121,6 @@ class VotingPage(Page):
     @staticmethod
     def vars_for_template(player: Player):
         return {'active_rep_id': player.session.vars.get('current_rep_pid')}
-
 class SyncAfterVote(WaitPage):
     wait_for_all_groups = True
     @staticmethod
@@ -168,59 +140,6 @@ class SyncAfterVote(WaitPage):
                     rep_pid = rep.participant.id
                     if rep_pid not in subsession.session.vars['removed_pids']:
                          subsession.session.vars['removed_pids'].append(rep_pid)
-
-class IncomeResults(Page):
-    """NEW PAGE: Shows income results BEFORE the vote."""
-    @staticmethod
-    def is_displayed(player: Player):
-        return (player.is_voter or player.is_active_rep) and player.session.vars.get('current_rep_pid') is not None
-    @staticmethod
-    def vars_for_template(player: Player):
-        group = player.group
-        rep = next((p for p in group.get_players() if p.is_active_rep), None)
-        voters = [p for p in group.get_players() if p.is_voter]
-        if rep and voters:
-            rep_contribution = rep.slider_score * group.rep_multiplier
-            voters_total_contribution = sum(p.slider_score for p in voters) * group.voter_multiplier
-            return {'rep_contribution': rep_contribution, 'voters_total_contribution': voters_total_contribution, 'collective_pot': group.collective_pot}
-        return {}
-
-class VotingResults(Page):
-    """RENAMED PAGE: Shows voting results AFTER the vote."""
-    @staticmethod
-    def is_displayed(player: Player):
-        return (player.is_voter or player.is_active_rep) and player.session.vars.get('current_rep_pid') is not None
-        
-    @staticmethod
-    def vars_for_template(player: Player):
-        session = player.session
-        active_group = next((g for g in player.subsession.get_groups() if len(g.get_players()) > 1), None)
-        
-        if active_group:
-            replace_votes = active_group.num_remove_votes
-            vote_result = "Replace" if replace_votes > (C.NUM_VOTERS / 2) else "Keep"
-        else:
-            replace_votes = 0
-            vote_result = "N/A"
-
-        next_rep_pid = None
-        if vote_result == "Keep":
-            next_rep_pid = session.vars.get('current_rep_pid')
-        else:
-            if session.vars['rep_pool_pids']:
-                next_rep_pid = session.vars['rep_pool_pids'][0]
-            else:
-                next_rep_pid = "None (Pool is empty)"
-        
-        # This is the only change: we now also pass 'vote_result_upper'
-        return {
-            'replace_votes': replace_votes,
-            'keep_votes': C.NUM_VOTERS - replace_votes,
-            'vote_result': vote_result,
-            'vote_result_upper': vote_result.upper(),
-            'next_rep_pid': next_rep_pid,
-        }
-
 class Stage2Decision(Page):
     form_model = 'player'
     form_fields = ['stage2_decision']
@@ -230,23 +149,33 @@ class Stage2Decision(Page):
     @staticmethod
     def vars_for_template(player: Player):
         return dict(C=C)
-    @staticmethod
-    def before_next_page(player: Player, timeout_happened):
-        decision = player.stage2_decision
-        group = player.group
-        if decision == 1: # Sabotage
-            player.payoff -= C.STAGE_2_COST
-            group.voter_multiplier *= 0.5
-            group.rep_multiplier *= 0.5
-        elif decision == 2: # Help
-            player.payoff -= C.STAGE_2_COST
-            group.voter_multiplier *= 1.5
-            group.rep_multiplier *= 1.5
-
 class PostDecisionWaitPage(WaitPage):
     @staticmethod
     def is_displayed(player: Player):
         return player.subsession.rep_was_removed_this_round
+class ResultsPage(Page):
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.session.vars.get('current_rep_pid') is not None
+    @staticmethod
+    def vars_for_template(player: Player):
+        session = player.session
+        active_group = next((g for g in player.subsession.get_groups() if len(g.get_players()) > 1), None)
+        if active_group:
+            replace_votes = active_group.num_remove_votes
+            vote_result = "Replace" if replace_votes > (C.NUM_VOTERS / 2) else "Keep"
+        else:
+            replace_votes = 0
+            vote_result = "N/A"
+        next_rep_pid = None
+        if vote_result == "Keep":
+            next_rep_pid = session.vars.get('current_rep_pid')
+        else:
+            if session.vars['rep_pool_pids']:
+                next_rep_pid = session.vars['rep_pool_pids'][0]
+            else:
+                next_rep_pid = "None (Pool is empty)"
+        return {'replace_votes': replace_votes, 'keep_votes': C.NUM_VOTERS - replace_votes, 'vote_result': vote_result, 'next_rep_pid': next_rep_pid}
 
 class EndOfRoundWaitPage(WaitPage):
     wait_for_all_groups = True
@@ -268,16 +197,15 @@ class EndOfGame(Page):
         return player.session.vars.get('current_rep_pid') is None
 
 page_sequence = [
-    InitializeRoundWaitPage,
+    InitializeRoundWaitPage, # <-- NEW FIRST PAGE
     Status,
     SliderTask,
     PayoffWaitPage,
-    IncomeResults,
     VotingPage,
     SyncAfterVote,
     Stage2Decision,
     PostDecisionWaitPage,
-    VotingResults,
+    ResultsPage,
     EndOfRoundWaitPage,
     EndOfGame,
 ]

@@ -8,9 +8,12 @@
             Your PID is <strong>{{ player.participant.id }}</strong>.
             Your role this round is:
             <strong>
-                {% if player.is_voter %} Voter
-                {% elif player.is_active_rep %} Representative
-                {% else %} Inactive (in Pool or Removed)
+                {% if player.participant.id in voter_pids %}
+                    Voter
+                {% elif player.participant.id == current_rep_pid %}
+                    Representative
+                {% else %}
+                    Inactive (in Pool or Removed)
                 {% endif %}
             </strong>
         </p>

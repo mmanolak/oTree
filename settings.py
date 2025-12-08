@@ -9,9 +9,7 @@ PARTICIPANT_FIELDS = [
     'ultimatum_offer_r1', 'ultimatum_offer_r2', 'ultimatum_offer_r3',
     'ultimatum_accepted_r1', 'ultimatum_accepted_r2', 'ultimatum_accepted_r3',
     'jod_destroy_r1', 'jod_destroy_r2', 'jod_destroy_r3',
-    'is_voter',
-    'stage2_decision_made',
-    'assigned_treatment_app', # For random assignment
+    'assigned_treatment', # Simplified this field name
 ]
 
 # --- List of the 4 treatment apps for random assignment ---
@@ -23,7 +21,7 @@ SESSION_CONFIGS = [
         name='Full_Experiment',
         display_name="Full Experiment (Random Treatment)",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod'] + TREATMENT_APPS,
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_4_treatment2a'],
     ),
 
     # --- 2. DEBUG SESSIONS ---
@@ -50,42 +48,52 @@ SESSION_CONFIGS = [
         display_name="DEBUG: Treatment 1 Only",
         num_demo_participants=5,
         app_sequence=['app_3_treatment1'],
-        slider_timeout=15,
+        slider_task_timeout=15,
     ),
     dict(
         name='debug_treatment_2a',
         display_name="DEBUG: Treatment 2a Only",
         num_demo_participants=5,
         app_sequence=['app_4_treatment2a'],
-        slider_timeout=15,
+        slider_task_timeout=15,
     ),
     dict(
         name='debug_treatment_2b',
         display_name="DEBUG: Treatment 2b Only",
         num_demo_participants=5,
         app_sequence=['app_5_treatment2b'],
-        slider_timeout=15,
+        slider_task_timeout=15,
     ),
     dict(
         name='debug_treatment_3',
         display_name="DEBUG: Treatment 3 Only",
         num_demo_participants=5,
         app_sequence=['app_6_treatment3'],
-        slider_timeout=15,
+        slider_task_timeout=15,
+    ),
+    dict(
+        name='debug_voting',
+        display_name="DEBUG: Voting Assignment Only",
+        num_demo_participants=5,
+        app_sequence=['floating_rotation'],
+        slider_task_timeout=15,
     ),
 ]
 
 # --- oTree Customization for Random Treatment Assignment ---
 import random
 def app_after_this_page(player, upcoming_apps):
-    # This function is called at the end of app_2_jod
-    if player.subsession.app_name == 'app_2_jod' and player.round_number == player.C.NUM_ROUNDS:
-        # Randomly choose one of the treatment apps for the whole session
-        if 'assigned_treatment_app' not in player.session.vars:
-            player.session.vars['assigned_treatment_app'] = random.choice(TREATMENT_APPS)
+    # This function is now only called at the end of the 'dispatcher' app
+    if player.subsession.app_name == 'dispatcher':
         
-        player.participant.assigned_treatment_app = player.session.vars['assigned_treatment_app']
-        return player.participant.assigned_treatment_app
+        # Randomly choose one of the REAL treatment apps
+        assigned_treatment = random.choice(TREATMENT_APPS)
+        
+        # Store the assigned treatment on the participant
+        player.participant.assigned_treatment = assigned_treatment
+        
+        # Tell oTree to send this player to that app next
+        return assigned_treatment
 
 # --- Standard oTree Settings ---
 LANGUAGE_CODE = 'en'
@@ -100,8 +108,10 @@ INSTALLED_APPS = [
     'app_0_dictator', 
     'app_1_ultimatum', 
     'app_2_jod',
+    'dispatcher',
     'app_3_treatment1', 
     'app_4_treatment2a', 
     'app_5_treatment2b', 
     'app_6_treatment3',
+    'floating_rotation',
 ]

@@ -47,12 +47,17 @@
     </style>
 
     <div class="score-display">
-        <strong>Your Role: {% if player.is_active_rep %}Representative{% else %}Voter{% endif %}</strong><br>
-        <small>(Each success adds {{ contribution_rate }} to the pot)</small>
-        <hr style="margin: 5px 0;">
-        <strong>Your Score: <span id="total-score">0</span></strong><br>
-        <strong>Your Contribution: <span id="live-contribution">0</span></strong>
-    </div>
+    <strong>
+        Your Role:
+        {% if player.is_active_rep %}
+            Representative
+        {% elif player.is_voter %}
+            Voter
+        {% endif %}
+    </strong>
+    <br>
+    <strong>Your Score This Round: <span id="total-score">0</span></strong>
+</div>
 
 
     <div class="task-container">

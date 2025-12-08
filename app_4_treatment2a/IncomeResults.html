@@ -1,0 +1,38 @@
+{% extends "global/Page.html" %}
+{% block title %}Round {{ player.round_number }} Performance Results{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Performance and Contribution Summary</h5>
+            <p>
+                This is the summary of contributions to the collective pot for this round.
+                Based on this information, voters will now decide whether to keep or replace the Representative.
+            </p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Contribution to Pot</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Representative's Contribution</td>
+                        <td>{{ rep_contribution }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Voters' Contribution</td>
+                        <td>{{ voters_total_contribution }}</td>
+                    </tr>
+                    <tr class="table-info">
+                        <td><strong>Total Collective Pot this Round</strong></td>
+                        <td><strong>{{ collective_pot }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <br>
+    {% next_button %}
+{% endblock %}
