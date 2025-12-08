@@ -1,0 +1,44 @@
+{{ extends "global/Page.html" }}
+{{ block title }}Round Results{{ endblock }}
+
+{{ block content }}
+
+
+<h3>Voting Results</h3>
+
+<p>Keep votes: {{ keep_votes }}</p>
+<p>Replace votes: {{ replace_votes }}</p>
+
+{{ if vote_result == "Keep" }}
+  <p><strong>The representative was KEPT.</strong></p>
+  <p>Current representative: Participant {{ active_rep_id }}</p>
+{{ else }}
+  <p><strong>The representative was REPLACED.</strong></p>
+  <p>New representative: Participant {{ active_rep_id }}</p>
+{{ endif }}
+
+<hr>
+
+<h3>Your Status</h3>
+{{ if role_status == "voter" }}
+  <p>You are a <strong>VOTER</strong>.</p>
+{{ elif role_status == "active_rep" }}
+  <p>You are the <strong>ACTIVE REPRESENTATIVE</strong>.</p>
+{{ elif role_status == "rep_pool" }}
+  <p>You are in the <strong>REPRESENTATIVE POOL</strong>.</p>
+{{ elif role_status == "retired" }}
+  <p>You are <strong>RETIRED</strong> (former representative).</p>
+{{ endif }}
+
+<hr>
+
+{{ if game_continues }}
+  <p><strong>The game continues to the next round.</strong></p>
+  {{ next_button }}
+{{ else }}
+  <p><strong>The game has ended.</strong></p>
+  {{ next_button }}
+{{ endif }}
+
+
+{{ endblock }}

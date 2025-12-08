@@ -1,163 +1,206 @@
 from otree.api import *
+
+# Imports a shared module (not used in this file)
+import shared_out
+# Imports Python's random library
 import random
 
+# Docstring for the app
+doc = 'A minimal, robust implementation of the representative rotation mechanic using a subsession bridge.'
+
+# Defines constants for the app
 class C(BaseConstants):
+    # Sets the app's URL name
     NAME_IN_URL = 'app_7_rotation'
+    # Disables automatic grouping
     PLAYERS_PER_GROUP = None
-    NUM_ROUNDS = 5
-    VOTERS_PER_GROUP = 3
-    REP_SALARY = 250
-    VOTER_SUCCESS_PAYOFF = 5
-    REP_SUCCESS_PAYOFF = 50
+    # Sets the maximum number of rounds
+    NUM_ROUNDS = 10
+    # Sets the number of voters
+    NUM_VOTERS = 3
 
+# Defines subsession-level properties
 class Subsession(BaseSubsession):
-    pass
+    # Bridge field to pass the removed rep's ID between wait pages
+    pid_of_removed_rep = models.IntegerField(initial=None)
 
+# Function that runs at the beginning of each round
 def creating_session(subsession: Subsession):
+    # Gets the session-wide variables
     session = subsession.session
+    # Checks if it is the first round
     if subsession.round_number == 1:
-        try:
-            _ = subsession.get_players()[0].participant.is_voter
-        except KeyError:
-            players = subsession.get_players()
-            random.shuffle(players)
-            voter_players = players[:C.VOTERS_PER_GROUP]
-            for p in voter_players: p.participant.is_voter = True
-            rep_pool_players = players[C.VOTERS_PER_GROUP:]
-            for p in rep_pool_players: p.participant.is_voter = False
+        # Gets all participants in the session
+        participants = session.get_participants()
+        # Randomizes the order of participants
+        random.shuffle(participants)
         
-        all_players = subsession.get_players()
-        session.vars['voter_pids'] = [p.participant.id for p in all_players if p.participant.is_voter]
-        session.vars['rep_pool_pids'] = [p.participant.id for p in all_players if not p.participant.is_voter]
+        # Selects the first N participants to be voters
+        voter_participants = participants[:C.NUM_VOTERS]
+        # Selects the remaining participants for the representative pool
+        rep_pool_participants = participants[C.NUM_VOTERS:]
+
+        # Stores the permanent IDs of voters
+        session.vars['voter_pids'] = [p.id for p in voter_participants]
+        # Stores the permanent IDs of the pool
+        session.vars['rep_pool_pids'] = [p.id for p in rep_pool_participants]
+        # Initializes a list to store IDs of removed reps
         session.vars['removed_pids'] = []
         
+        # Checks if there are representatives in the pool
         if session.vars['rep_pool_pids']:
+            # Promotes the first person from the pool to be the representative
             session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
         else:
+            # Sets the current rep to None if the pool is empty
             session.vars['current_rep_pid'] = None
-
+    
+    # Gets the permanent lists of player IDs
     voter_pids = session.vars['voter_pids']
     current_rep_pid = session.vars.get('current_rep_pid')
     removed_pids = session.vars['removed_pids']
-
-    for p in subsession.get_players():
-        pid = p.participant.id
-        if pid in voter_pids: p.game_state = 1
-        elif pid == current_rep_pid: p.game_state = 2
-        elif pid in removed_pids: p.game_state = 3
-        else: p.game_state = 0
     
-    active_players = [p for p in subsession.get_players() if p.game_state in [1, 2]]
-    inactive_players = [p for p in subsession.get_players() if p.game_state in [0, 3]]
+    # Loops through each player for the current round
+    for p in subsession.get_players():
+        # Gets the player's permanent ID
+        pid = p.participant.id
+        # Assigns the 'voter' role
+        if pid in voter_pids:
+            p.is_voter = True
+            p.is_active_rep = False
+        # Assigns the 'representative' role
+        elif pid == current_rep_pid:
+            p.is_voter = False
+            p.is_active_rep = True
+        # Assigns inactive status
+        else:
+            p.is_voter = False
+            p.is_active_rep = False
+
+    # Creates a list of active players for this round
+    active_players = [p for p in subsession.get_players() if p.is_voter or p.is_active_rep]
+    # Creates a list of inactive players
+    inactive_players = [p for p in subsession.get_players() if not (p.is_voter or p.is_active_rep)]
+    # Initializes the grouping structure
     group_matrix = []
+    # Puts all active players into one group
     if active_players: group_matrix.append(active_players)
+    # Puts each inactive player into their own group of one
     for p in inactive_players: group_matrix.append([p])
+    # Sets the group structure for the round
     subsession.set_group_matrix(group_matrix)
 
+# Defines group-level properties
 class Group(BaseGroup):
+    # Stores the number of votes to remove the rep
     num_remove_votes = models.IntegerField(initial=0)
-    collective_pot = models.FloatField(initial=0)
 
+# Defines player-level properties
 class Player(BasePlayer):
-    game_state = models.IntegerField()
-    slider_score = models.IntegerField(initial=0)
-    vote_to_remove = models.BooleanField(label="Do you vote to remove the Representative?", choices=[[True, 'Yes'], [False, 'No']], widget=widgets.RadioSelect)
-    was_removed_this_round = models.BooleanField(initial=False)
+    # Stores the voter's decision
+    vote_choice = models.BooleanField(label='Do you want to replace the current representative?', choices=[[True, 'Replace'], [False, 'Keep']], widget=widgets.RadioSelect)
+    # Stores if the player is a voter this round
+    is_voter = models.BooleanField(initial=False)
+    # Stores if the player is the representative this round
+    is_active_rep = models.BooleanField(initial=False)
 
-# --- PAGES ---
-class RoundStatus(Page):
-    @staticmethod
-    def is_displayed(player: Player):
-        return player.session.vars.get('current_rep_pid') is not None
+# Defines the 'Status' page
+class Status(Page):
+    # Passes variables to the HTML template
     @staticmethod
     def vars_for_template(player: Player):
-        return {
-            'current_rep_pid': player.session.vars.get('current_rep_pid'),
-            'rep_pool_pids': player.session.vars.get('rep_pool_pids'),
-            'removed_pids': player.session.vars.get('removed_pids'),
-        }
+        # Passes the entire session.vars dictionary to the template
+        return { 'session_vars': player.session.vars }
 
-class SliderTask(Page):
+# Defines the 'VotingPage'
+class VotingPage(Page):
+    # Binds the page to the Player model
     form_model = 'player'
-    form_fields = ['slider_score']
-    timeout_seconds = 15
+    # Specifies which player field is a form field on this page
+    form_fields = ['vote_choice']
+    # Determines if the page is shown to a player
     @staticmethod
     def is_displayed(player: Player):
-        return player.game_state in [1, 2]
-
-class PoolWaitPage(Page):
-    timeout_seconds = 15
+        # Shows page only if the player is a voter
+        return player.is_voter
+    # Passes variables to the HTML template
     @staticmethod
-    def is_displayed(player: Player):
-        return player.game_state in [0, 3]
+    def vars_for_template(player: Player):
+        # Passes the current representative's ID to the template
+        return {'active_rep_id': player.session.vars.get('current_rep_pid')}
 
-class SyncAfterTask(WaitPage):
-    wait_for_all_groups = True
-    @staticmethod
-    def after_all_players_arrive(subsession: Subsession):
-        for group in subsession.get_groups():
-            if len(group.get_players()) > 1:
-                rep = next((p for p in group.get_players() if p.game_state == 2), None)
-                voters = [p for p in group.get_players() if p.game_state == 1]
-                if rep:
-                    pot = (rep.slider_score * C.REP_SUCCESS_PAYOFF + sum(p.slider_score for p in voters) * C.VOTER_SUCCESS_PAYOFF)
-                    group.collective_pot = pot
-                    for p in voters: p.payoff = pot / C.VOTERS_PER_GROUP
-                    rep.payoff = C.REP_SALARY
-
-class Vote(Page):
-    form_model = 'player'
-    form_fields = ['vote_to_remove']
-    @staticmethod
-    def is_displayed(player: Player):
-        return player.game_state == 1
-
+# Defines the 'SyncAfterVote' wait page
 class SyncAfterVote(WaitPage):
-    @staticmethod
-    def after_all_players_arrive(group: Group):
-        rep = next((p for p in group.get_players() if p.game_state == 2), None)
-        if rep:
-            voters = [p for p in group.get_players() if p.game_state == 1]
-            num_votes = sum(1 for p in voters if p.field_maybe_none('vote_to_remove') is True)
-            group.num_remove_votes = num_votes
-            if num_votes >= 2:
-                rep.was_removed_this_round = True
-
-class VoteResults(Page):
-    @staticmethod
-    def is_displayed(player: Player):
-        return player.session.vars.get('current_rep_pid') is not None
-    @staticmethod
-    def vars_for_template(player: Player):
-        active_group = next((g for g in player.subsession.get_groups() if len(g.get_players()) > 1), None)
-        return {'active_group': active_group}
-
-class EndOfRoundWaitPage(WaitPage):
+    # Waits for all players in the session
     wait_for_all_groups = True
+    # Function that runs after all players arrive
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
+        # Finds the active group (more than 1 player)
+        active_group = next((g for g in subsession.get_groups() if len(g.get_players()) > 1), None)
+        # Checks if an active group exists
+        if active_group:
+            # Finds the representative in the active group
+            rep = next((p for p in active_group.get_players() if p.is_active_rep), None)
+            # Checks if a representative was found
+            if rep:
+                # Gets the voters from the active group
+                voters = [p for p in active_group.get_players() if p.is_voter]
+                # Counts the number of 'Replace' votes
+                replace_votes = sum(1 for v in voters if v.field_maybe_none('vote_choice') is True)
+                # Stores the vote count on the group
+                active_group.num_remove_votes = replace_votes
+                # Checks if the replacement threshold was met
+                if replace_votes > (C.NUM_VOTERS / 2):
+                    # Writes the removed rep's ID to the subsession bridge field
+                    subsession.pid_of_removed_rep = rep.participant.id
+
+# Defines the 'ResultsPage'
+class ResultsPage(Page):
+    # Passes variables to the HTML template
+    @staticmethod
+    def vars_for_template(player: Player):
+        # Passes the entire session.vars dictionary to the template
+        return { 'session_vars': player.session.vars }
+
+# Defines the 'EndOfRoundWaitPage'
+class EndOfRoundWaitPage(WaitPage):
+    # Waits for all players in the session
+    wait_for_all_groups = True
+    # Function that runs after all players arrive
+    @staticmethod
+    def after_all_players_arrive(subsession: Subsession):
+        # Gets the session-wide variables
         session = subsession.session
-        removed_rep = next((p for p in subsession.get_players() if p.was_removed_this_round), None)
+        # Safely reads the removed rep's ID from the subsession bridge
+        removed_pid = subsession.field_maybe_none('pid_of_removed_rep')
         
-        if removed_rep:
-            session.vars['removed_pids'].append(removed_rep.participant.id)
+        # Checks if a representative was removed
+        if removed_pid:
+            # Adds the removed rep's ID to the permanent removed list
+            session.vars['removed_pids'].append(removed_pid)
+            # Checks if the representative pool is not empty
             if session.vars['rep_pool_pids']:
+                # Promotes the next person from the pool
                 session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
             else:
+                # Sets the current rep to None if the pool is empty
                 session.vars['current_rep_pid'] = None
 
-class EndOfExperiment(Page):
+# Defines the 'EndOfGame' page
+class EndOfGame(Page):
+    # Determines if the page is shown to a player
     @staticmethod
     def is_displayed(player: Player):
-        return player.session.vars.get('current_rep_pid') is None and player.round_number > 1
+        # Shows page only if there is no active representative
+        return player.session.vars.get('current_rep_pid') is None
 
+# Defines the order of pages in the app
 page_sequence = [
-    RoundStatus,
-    SliderTask, PoolWaitPage,
-    SyncAfterTask,
-    Vote, PoolWaitPage,
+    Status,
+    VotingPage,
     SyncAfterVote,
-    VoteResults,
+    ResultsPage,
     EndOfRoundWaitPage,
-    EndOfExperiment,
+    EndOfGame,
 ]

@@ -1,1 +1,1 @@
-otree>=6
+otree>=5

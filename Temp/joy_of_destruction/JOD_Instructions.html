@@ -1,0 +1,27 @@
+{{ extends "global/Page.html" }}
+{{ block title }}Title{{ endblock }}
+
+{{ block content }}
+
+<p>Welcome to the Joy of Destruction Game.</p>
+<p>In each round, you are randomly paired with another anonymous participant.</p>
+<ul>
+  <li>You and the other participant each start with <strong>10 points</strong>.</li>
+  <li>You choose how many of your own points to spend to <strong>destroy</strong> the other participant’s points.</li>
+  <li>The other participant simultaneously makes the same kind of decision about your points.</li>
+</ul>
+<p>For every 1 point you spend on destruction, the other participant loses 1 point. The same applies in the other direction.</p>
+<p>Let:</p>
+<ul>
+  <li><em>a</em> = the number of points you choose to spend to destroy the other’s points,</li>
+  <li><em>b</em> = the number of points the other chooses to spend to destroy your points.</li>
+</ul>
+<p>Then your payoff for the round is:</p>
+<ul>
+  <li><strong>10 − a − b</strong> points.</li>
+</ul>
+<p>The other participant’s payoff is also <strong>10 − a − b</strong>.</p>
+<p>You will play this game for 3 rounds. In each round you are re-matched with a different participant within this game.</p>
+<p>Click “Next” to begin.</p>
+
+{{ endblock }}

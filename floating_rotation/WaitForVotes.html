@@ -1,0 +1,20 @@
+{{ block title }}Waiting for Voters{{ endblock }}
+
+{{ block content }}
+
+
+{{ if player.participant.is_voter }}
+  <p>Waiting for all voters to submit their votes...</p>
+{{ elif player.participant.is_active_rep }}
+  <p>You are the current representative.</p>
+  <p>Waiting for voters to decide whether to keep or replace you...</p>
+{{ elif player.participant.in_rep_pool }}
+  <p>You are in the representative pool.</p>
+  <p>Waiting for the voting process to complete...</p>
+{{ elif player.participant.in_retired_pool }}
+  <p>You are a retired representative.</p>
+  <p>Waiting for the voting process to complete...</p>
+{{ endif }}
+
+
+{{ endblock }}

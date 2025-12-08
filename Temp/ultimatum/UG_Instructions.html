@@ -1,0 +1,26 @@
+{{ extends "global/Page.html" }}
+{{ block title }}Title{{ endblock }}
+
+{{ block content }}
+
+<p>Welcome to the Ultimatum Game.</p>
+<p>In each round, you are randomly paired with another anonymous participant.</p>
+<p>One of you is randomly chosen as the <strong>Proposer</strong>, the other as the <strong>Responder</strong>.</p>
+<ul>
+  <li>The group receives <strong>10 points</strong> to split.</li>
+  <li>The Proposer chooses how many of the 10 points to offer to the Responder.</li>
+  <li>The Responder then decides whether to <strong>accept</strong> or <strong>reject</strong> the offer.</li>
+</ul>
+<p>If the Responder <strong>accepts</strong> the offer:</p>
+<ul>
+  <li>The Proposer earns <strong>10 minus the offered amount</strong>.</li>
+  <li>The Responder earns <strong>the offered amount</strong>.</li>
+</ul>
+<p>If the Responder <strong>rejects</strong> the offer:</p>
+<ul>
+  <li><strong>Both</strong> players earn <strong>0 points</strong> in that round.</li>
+</ul>
+<p>You will play this game for 3 rounds. In each round you are re-matched with a different participant within this game.</p>
+<p>Click “Next” to begin.</p>
+
+{{ endblock }}
