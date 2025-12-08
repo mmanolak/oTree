@@ -9,22 +9,47 @@ PARTICIPANT_FIELDS = [
     'ultimatum_offer_r1', 'ultimatum_offer_r2', 'ultimatum_offer_r3',
     'ultimatum_accepted_r1', 'ultimatum_accepted_r2', 'ultimatum_accepted_r3',
     'jod_destroy_r1', 'jod_destroy_r2', 'jod_destroy_r3',
-    'assigned_treatment', # Simplified this field name
+    'assigned_treatment',
 ]
 
-# --- List of the 4 treatment apps for random assignment ---
-TREATMENT_APPS = ['app_3_treatment1', 'app_4_treatment2a', 'app_5_treatment2b', 'app_6_treatment3']
-
 SESSION_CONFIGS = [
-    # --- 1. THE SINGLE FULL EXPERIMENT CONFIGURATION ---
+    # 1) The Treatments
     dict(
         name='Full_Experiment',
-        display_name="Full Experiment (Random Treatment)",
+        display_name="All Treatments, All Games",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_4_treatment2a'],
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_treatment1', 'app_4_treatment2a', 'app_5_treatment2b', 'app_6_treatment3'],
     ),
-
-    # --- 2. DEBUG SESSIONS ---
+    
+    dict(
+        name='treatment_1',
+        display_name="Treatment 1 - Ultimate Representative",
+        num_demo_participants=8,
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_3_treatment1'],
+    ),
+    
+    dict(
+        name='treatment_2a',
+        display_name="Treatment 2a - Vengeful Representative",
+        num_demo_participants=8,
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_4_treatment2a'],
+    ),
+    
+    dict(
+        name='treatment_2b',
+        display_name="Treatment 2b - Representative Chaos",
+        num_demo_participants=8,
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_5_treatment2b'],
+    ),
+    
+    dict(
+        name='treatment_3',
+        display_name="Treatment 3 - Term Limits",
+        num_demo_participants=8,
+        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_6_treatment3'],
+    ),
+    
+    # 2. Debugging Area - Cause Life hates
     dict(
         name='debug_dictator',
         display_name="DEBUG: Dictator Game Only",
@@ -46,28 +71,28 @@ SESSION_CONFIGS = [
     dict(
         name='debug_treatment_1',
         display_name="DEBUG: Treatment 1 Only",
-        num_demo_participants=5,
+        num_demo_participants=6,
         app_sequence=['app_3_treatment1'],
         slider_task_timeout=15,
     ),
     dict(
         name='debug_treatment_2a',
         display_name="DEBUG: Treatment 2a Only",
-        num_demo_participants=5,
+        num_demo_participants=6,
         app_sequence=['app_4_treatment2a'],
         slider_task_timeout=15,
     ),
     dict(
         name='debug_treatment_2b',
         display_name="DEBUG: Treatment 2b Only",
-        num_demo_participants=5,
+        num_demo_participants=6,
         app_sequence=['app_5_treatment2b'],
         slider_task_timeout=15,
     ),
     dict(
         name='debug_treatment_3',
         display_name="DEBUG: Treatment 3 Only",
-        num_demo_participants=5,
+        num_demo_participants=6,
         app_sequence=['app_6_treatment3'],
         slider_task_timeout=15,
     ),
@@ -80,22 +105,7 @@ SESSION_CONFIGS = [
     ),
 ]
 
-# --- oTree Customization for Random Treatment Assignment ---
-import random
-def app_after_this_page(player, upcoming_apps):
-    # This function is now only called at the end of the 'dispatcher' app
-    if player.subsession.app_name == 'dispatcher':
-        
-        # Randomly choose one of the REAL treatment apps
-        assigned_treatment = random.choice(TREATMENT_APPS)
-        
-        # Store the assigned treatment on the participant
-        player.participant.assigned_treatment = assigned_treatment
-        
-        # Tell oTree to send this player to that app next
-        return assigned_treatment
-
-# --- Standard oTree Settings ---
+# Standard oTree Settings
 LANGUAGE_CODE = 'en'
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
