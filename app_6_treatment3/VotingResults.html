@@ -4,24 +4,17 @@
 {% block content %}
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Voting Summary</h5>
-            <table class="table">
-                <tr>
-                    <td>Votes to Keep Representative:</td>
-                    <td>{{ keep_votes }}</td>
-                </tr>
-                <tr>
-                    <td>Votes to Replace Representative:</td>
-                    <td>{{ replace_votes }}</td>
-                </tr>
-            </table>
+            <h5 class="card-title">Round Outcome</h5>
             <hr>
+            {% if outcome_status == "Retired" %}
+                <h4 style="color: blue;">Outcome: The Representative has served a full term and is now RETIRED.</h4>
+                <p>The Representative for the next round will be Participant {{ next_rep_pid}}.</p>
 
-            {% if vote_result == 'Replace' %}
-                <h4>Outcome: The Representative was <span style="font-weight:bold; color: red;">REPLACED</span>.</h4>
+            {% elif outcome_status == "Replaced" %}
+                <h4 style="color: red;">Outcome: The Representative was REPLACED.</h4>
                 <p>The Representative for the next round will be Participant {{ next_rep_pid }}.</p>
-            {% else %}
-                <h4>Outcome: The Representative was <span style="font-weight:bold; color: green;">KEPT</span>.</h4>
+            {% else %} 
+                <h4 style="color: green;">Outcome: The Representative was KEPT.</h4>
                 <p>The Representative for the next round will remain Participant {{ next_rep_pid }}.</p>
             {% endif %}
 

@@ -2,6 +2,12 @@
 {% block title %}Round {{ player.round_number }} Status{% endblock %}
 {% block content %}
 
+{% if legacy_effect != 'None' %}
+        <div class="alert alert-info">
+            <strong>Note from Previous Round:</strong> The former Representative chose to "<strong>{{ legacy_effect }}</strong>" the group. This will affect the point multipliers for this round.
+        </div>
+    {% endif %}
+
     <div style="border: 2px solid #007bff; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
         <h4>Your Identity</h4>
         <p>
