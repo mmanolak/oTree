@@ -13,6 +13,8 @@ class C(BaseConstants):
     REP_SALARY = 150
     BASE_VOTER_SUCCESS_PAYOFF = 5
     BASE_REP_SUCCESS_PAYOFF = 50
+    INDEFINITE_HORIZON_START_ROUND = 6
+    CONTINUATION_PROBABILITY = 0.90
 
 class Subsession(BaseSubsession):
     rep_was_removed_this_round = models.BooleanField(initial=False)
@@ -33,6 +35,7 @@ def creating_session(subsession: Subsession):
             session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
         else:
             session.vars['current_rep_pid'] = None
+        session.vars['game_over'] = False
     
 class Group(BaseGroup):
     num_remove_votes = models.IntegerField(initial=0)
@@ -82,6 +85,8 @@ class InitializeRoundWaitPage(WaitPage):
 class Status(Page):
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         return player.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def vars_for_template(player: Player):
@@ -105,12 +110,16 @@ class SliderTask(Page):
         return {'contribution_rate': contribution_rate}
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         return (player.is_voter or player.is_active_rep) and player.session.vars.get('current_rep_pid') is not None
 
 class PayoffWaitPage(WaitPage):
     wait_for_all_groups = True
     @staticmethod
     def is_displayed(subsession: Subsession):
+        if subsession.session.vars.get('game_over', False):
+            return False
         return subsession.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
@@ -127,6 +136,8 @@ class PayoffWaitPage(WaitPage):
 class IncomeResults(Page):
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         return (player.is_voter or player.is_active_rep) and player.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def vars_for_template(player: Player):
@@ -144,6 +155,8 @@ class VotingPage(Page):
     form_fields = ['vote_choice']
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         return player.is_voter and player.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def vars_for_template(player: Player):
@@ -153,6 +166,8 @@ class SyncAfterVote(WaitPage):
     wait_for_all_groups = True
     @staticmethod
     def is_displayed(subsession: Subsession):
+        if subsession.session.vars.get('game_over', False):
+            return False
         return subsession.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
@@ -178,6 +193,8 @@ class Stage2Decision(Page):
     form_fields = ['stage2_decision']
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         # T2a Display Rule
         # Show this page to the current representative IF they were just voted out in this round.
         return player.is_active_rep and player.subsession.rep_was_removed_this_round
@@ -188,29 +205,33 @@ class Stage2Decision(Page):
     def before_next_page(player: Player, timeout_happened):
         decision = player.stage2_decision
         group = player.group
-
         if decision in [1, 2]: 
             player.payoff -= C.STAGE_2_COST
-
-        
         if decision == 1: 
             group.voter_multiplier = C.BASE_VOTER_SUCCESS_PAYOFF * 0.5
             group.rep_multiplier = C.BASE_REP_SUCCESS_PAYOFF * 0.5
+            player.session.vars['legacy_effect'] = "Sabotage"
         elif decision == 2: 
             group.voter_multiplier = C.BASE_VOTER_SUCCESS_PAYOFF * 1.5
             group.rep_multiplier = C.BASE_REP_SUCCESS_PAYOFF * 1.5
+            player.session.vars['legacy_effect'] = "Help"
         else: 
             group.voter_multiplier = C.BASE_VOTER_SUCCESS_PAYOFF
             group.rep_multiplier = C.BASE_REP_SUCCESS_PAYOFF
+            player.session.vars['legacy_effect'] = "Neutral"
 
 class PostDecisionWaitPage(WaitPage):
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         return player.subsession.rep_was_removed_this_round
 
 class VotingResults(Page):
     @staticmethod
     def is_displayed(player: Player):
+        if player.session.vars.get('game_over', False):
+            return False
         return (player.is_voter or player.is_active_rep) and player.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def vars_for_template(player: Player):
@@ -232,18 +253,37 @@ class EndOfRoundWaitPage(WaitPage):
     wait_for_all_groups = True
     @staticmethod
     def is_displayed(subsession: Subsession):
+        if subsession.session.vars.get('game_over', False):
+            return False
         return subsession.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
-        if subsession.rep_was_removed_this_round:
-            session = subsession.session
-            if session.vars['rep_pool_pids']: session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
-            else: session.vars['current_rep_pid'] = None
+        session = subsession.session
+        
+        # 1. Check for random termination First
+        if not session.vars['game_over'] and subsession.round_number >= C.INDEFINITE_HORIZON_START_ROUND:
+            if random.random() > C.CONTINUATION_PROBABILITY:
+                session.vars['game_over'] = True
+
+        # 2. Only if the game is not over, promote the next representative
+        if not session.vars['game_over']:
+            if subsession.rep_was_removed_this_round:
+                if session.vars['rep_pool_pids']: 
+                    session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
+                    # Note: rep_term_start_round is not needed for T2a, but is for T3
+                    session.vars['rep_term_start_round'] = subsession.round_number + 1
+                else: 
+                    session.vars['current_rep_pid'] = None
+
 
 class TotalResults(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.session.vars.get('current_rep_pid') is None
+        pool_is_empty = player.session.vars.get('current_rep_pid') is None
+        random_end_triggered = player.session.vars.get('game_over', False)
+        is_max_round = player.round_number == C.NUM_ROUNDS
+
+        return pool_is_empty or random_end_triggered or is_max_round
 
     @staticmethod
     def vars_for_template(player: Player):
@@ -263,7 +303,11 @@ class FinalWaitPage(WaitPage):
     
     @staticmethod
     def is_displayed(player: Player):
-        return player.session.vars.get('current_rep_pid') is None
+        pool_is_empty = player.session.vars.get('current_rep_pid') is None
+        random_end_triggered = player.session.vars.get('game_over', False)
+        is_max_round = player.round_number == C.NUM_ROUNDS
+
+        return pool_is_empty or random_end_triggered or is_max_round
 
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):

@@ -13,8 +13,8 @@ class C(BaseConstants):
     REP_SALARY = 150
     BASE_VOTER_SUCCESS_PAYOFF = 5
     BASE_REP_SUCCESS_PAYOFF = 50
-    INDEFINITE_HORIZON_START_ROUND = 2  # The round number when the random end can start
-    CONTINUATION_PROBABILITY = 1     # 90% chance the game continues
+    INDEFINITE_HORIZON_START_ROUND = 6  # The round number when the random end can start
+    CONTINUATION_PROBABILITY = 0.9     # 90% chance the game continues
 
 class Subsession(BaseSubsession):
     rep_was_removed_this_round = models.BooleanField(initial=False)
