@@ -1,0 +1,32 @@
+{% extends "global/Page.html" %}
+{% block title %}Round {{ player.round_number }} Voting Results{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Voting Summary</h5>
+            <table class="table">
+                <tr>
+                    <td>Votes to Keep Representative:</td>
+                    <td>{{ keep_votes }}</td>
+                </tr>
+                <tr>
+                    <td>Votes to Replace Representative:</td>
+                    <td>{{ replace_votes }}</td>
+                </tr>
+            </table>
+            <hr>
+
+            {% if vote_result == 'Replace' %}
+                <h4>Outcome: The Representative was <span style="font-weight:bold; color: red;">REPLACED</span>.</h4>
+                <p>The Representative for the next round will be Participant {{ next_rep_pid }}.</p>
+            {% else %}
+                <h4>Outcome: The Representative was <span style="font-weight:bold; color: green;">KEPT</span>.</h4>
+                <p>The Representative for the next round will remain Participant {{ next_rep_pid }}.</p>
+            {% endif %}
+
+        </div>
+    </div>
+    <br>
+    {% next_button %}
+{% endblock %}
