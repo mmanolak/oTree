@@ -106,6 +106,15 @@ ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin'
 SECRET_KEY = 'a-secret-key-for-testing'
 
+ROOMS = [
+    dict(
+        name='econ_lab',
+        display_name='Economics Lab Session',
+        participant_label_file='_rooms/econ_lab.txt',
+        use_secure_urls=False
+    ),
+]
+
 INSTALLED_APPS = [
     'otree',
     'app_00_personal_information',
