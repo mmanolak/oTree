@@ -1,0 +1,45 @@
+{% extends "global/Page.html" %}
+{% block title %}
+    Final Experiment Results
+{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Overall Summary</h5>
+            <p>The experiment is now over. Below is a summary of the total points earned.</p>
+
+            <table class="table">
+                <tr>
+                    <td>Total Points Earned by All Representatives:</td>
+                    <td>{{ total_rep_points }}</td>
+                </tr>
+                <tr>
+                    <td>Total Points Earned by All Voters:</td>
+                    <td>{{ total_voter_points }}</td>
+                </tr>
+                <tr class="table-info">
+                    <td><strong>Total Points Earned by All Players:</strong></td>
+                    <td><strong>{{ overall_total_points }}</strong></td>
+                </tr>
+            </table>
+            <hr>
+            <h4>Your total earnings for this part of the experiment are {{ your_total_points }} points.</h4>
+        </div>
+    </div>
+    <br>
+    <p>Please click Next to conclude the experiment.</p>
+
+
+    <div class="card bg-light">
+        <div class="card-body">
+            <p>
+                This part of the experiment has concluded.
+            </p>
+            <p>
+                Please leave, now.
+            </p>
+        </div>
+    </div>
+
+{% endblock %}
