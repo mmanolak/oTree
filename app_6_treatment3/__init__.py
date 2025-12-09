@@ -31,6 +31,7 @@ def creating_session(subsession: Subsession):
         session.vars['removed_pids'] = []
         if session.vars['rep_pool_pids']:
             session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
+            session.vars['rep_term_start_round'] = 1
         else:
             session.vars['current_rep_pid'] = None
     
@@ -156,18 +157,23 @@ class SyncAfterVote(WaitPage):
         return subsession.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
-        # Treatment 2a Core Logic: Vote Counting
-        # This function counts the votes and determines if the representative is removed.
         active_group = next((g for g in subsession.get_groups() if len(g.get_players()) > 1), None)
         if active_group:
             rep = next((p for p in active_group.get_players() if p.is_active_rep), None)
             if rep:
-                # Count the number of "Replace" votes from the active voters.
+                # Logic for Treatment 3
+                
+                # 1. Count the votes
                 voters = [p for p in active_group.get_players() if p.is_voter]
                 replace_votes = sum(1 for v in voters if v.field_maybe_none('vote_choice') is True)
                 active_group.num_remove_votes = replace_votes
-                if replace_votes > (C.NUM_VOTERS / 2):
-                    # If a majority voted to replace, mark the rep for removal
+                voted_out = replace_votes > (C.NUM_VOTERS / 2)
+                # 2. Check tenure
+                start_round = subsession.session.vars.get('rep_term_start_round', 0)
+                rounds_served = subsession.round_number - start_round + 1
+                term_is_up = rounds_served >= 3
+                # 3. Determine removal
+                if voted_out or term_is_up:
                     subsession.rep_was_removed_this_round = True
                     rep_pid = rep.participant.id
                     if rep_pid not in subsession.session.vars['removed_pids']:
@@ -237,8 +243,11 @@ class EndOfRoundWaitPage(WaitPage):
     def after_all_players_arrive(subsession: Subsession):
         if subsession.rep_was_removed_this_round:
             session = subsession.session
-            if session.vars['rep_pool_pids']: session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
-            else: session.vars['current_rep_pid'] = None
+            if session.vars['rep_pool_pids']: 
+                session.vars['current_rep_pid'] = session.vars['rep_pool_pids'].pop(0)
+                session.vars['rep_term_start_round'] = subsession.round_number + 1
+            else: 
+                session.vars['current_rep_pid'] = None
 
 class TotalResults(Page):
     @staticmethod
