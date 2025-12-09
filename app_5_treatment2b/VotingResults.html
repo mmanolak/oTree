@@ -1,10 +1,17 @@
 {% extends "global/Page.html" %}
-{% block title %}Round {{ player.round_number }} Voting Results{% endblock %}
+{% block title %}Round {{ player.round_number }} Outcome{% endblock %}
 
 {% block content %}
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Voting Summary</h5>
+            <h5 class="card-title">Round Outcome</h5>
+            <p>
+                The outcome for this round was determined by a two-step process: the vote, followed by a random administrative review.
+            </p>
+            <hr>
+
+            <!-- Step 1: Show the Voting Results -->
+            <h6>Step 1: Voting Summary</h6>
             <table class="table">
                 <tr>
                     <td>Votes to Keep Representative:</td>
@@ -15,13 +22,40 @@
                     <td>{{ replace_votes }}</td>
                 </tr>
             </table>
+            <p>
+                Based on the vote, the intended outcome was to <strong>{{ vote_result }}</strong> the Representative.
+            </p>
             <hr>
 
-            {% if vote_result == 'Replace' %}
-                <h4>Outcome: The Representative was <span style="font-weight:bold; color: red;">REPLACED</span>.</h4>
+            <!-- Step 2: Show the Final Outcome -->
+            <h6>Step 2: Final Outcome after Administrative Review</h6>
+
+            {% if vote_result == 'Keep' and subsession.rep_was_removed_this_round %}
+                <!-- This is the "Unlucky Winner" case -->
+                <div class="alert alert-warning">
+                    <h4 class="alert-heading">Outcome: The Representative was REMOVED.</h4>
+                    <p>Although the Representative won the vote, the random administrative review resulted in their removal.</p>
+                </div>
                 <p>The Representative for the next round will be Participant {{ next_rep_pid }}.</p>
-            {% else %}
-                <h4>Outcome: The Representative was <span style="font-weight:bold; color: green;">KEPT</span>.</h4>
+
+            {% elif vote_result == 'Replace' and not subsession.rep_was_removed_this_round %}
+                <!-- This is the "Lucky Loser" case -->
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">Outcome: The Representative was KEPT.</h4>
+                    <p>Although the Representative lost the vote, the random administrative review resulted in them being retained.</p>
+                </div>
+                <p>The Representative for the next round will remain Participant {{ next_rep_pid }}.</p>
+
+            {% elif vote_result == 'Replace' and subsession.rep_was_removed_this_round %}
+                <!-- This is the standard "Voted Out" case -->
+                <h4 style="color: red;">Outcome: The Representative was REPLACED.</h4>
+                <p>The Representative lost the vote, and the administrative review confirmed their removal.</p>
+                <p>The Representative for the next round will be Participant {{ next_rep_pid }}.</p>
+
+            {% else %} <!-- vote_result == 'Keep' and not subsession.rep_was_removed_this_round -->
+                <!-- This is the standard "Kept" case -->
+                <h4 style="color: green;">Outcome: The Representative was KEPT.</h4>
+                <p>The Representative won the vote, and the administrative review confirmed their retention.</p>
                 <p>The Representative for the next round will remain Participant {{ next_rep_pid }}.</p>
             {% endif %}
 

@@ -18,35 +18,35 @@ SESSION_CONFIGS = [
         name='Full_Experiment',
         display_name="All Treatments, All Games",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_treatment1', 'app_4_treatment2a', 'app_5_treatment2b', 'app_6_treatment3'],
+        app_sequence=['app_00_personal_information','app_0_dictator', 'app_1_ultimatum', 'app_2_jod', 'app_3_treatment1', 'app_4_treatment2a', 'app_5_treatment2b', 'app_6_treatment3'],
     ),
     
     dict(
         name='treatment_1',
         display_name="Treatment 1 - Ultimate Representative",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_3_treatment1'],
+        app_sequence=['app_00_personal_information','app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_3_treatment1'],
     ),
     
     dict(
         name='treatment_2a',
         display_name="Treatment 2a - Vengeful Representative",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_4_treatment2a'],
+        app_sequence=['app_00_personal_information','app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_4_treatment2a'],
     ),
     
     dict(
         name='treatment_2b',
         display_name="Treatment 2b - Representative Chaos",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_5_treatment2b'],
+        app_sequence=['app_00_personal_information','app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_5_treatment2b'],
     ),
     
     dict(
         name='treatment_3',
         display_name="Treatment 3 - Term Limits",
         num_demo_participants=8,
-        app_sequence=['app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_6_treatment3'],
+        app_sequence=['app_00_personal_information','app_0_dictator', 'app_1_ultimatum', 'app_2_jod','app_6_treatment3'],
     ),
     
     # 2. Debugging Area - Cause Life hates
@@ -96,13 +96,6 @@ SESSION_CONFIGS = [
         app_sequence=['app_6_treatment3'],
         slider_task_timeout=15,
     ),
-    dict(
-        name='debug_voting',
-        display_name="DEBUG: Voting Assignment Only",
-        num_demo_participants=5,
-        app_sequence=['floating_rotation'],
-        slider_task_timeout=15,
-    ),
 ]
 
 # Standard oTree Settings
@@ -115,6 +108,7 @@ SECRET_KEY = 'a-secret-key-for-testing'
 
 INSTALLED_APPS = [
     'otree',
+    'app_00_personal_information',
     'app_0_dictator', 
     'app_1_ultimatum', 
     'app_2_jod',
@@ -123,5 +117,4 @@ INSTALLED_APPS = [
     'app_4_treatment2a', 
     'app_5_treatment2b', 
     'app_6_treatment3',
-    'floating_rotation',
 ]

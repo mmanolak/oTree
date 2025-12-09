@@ -1,0 +1,15 @@
+{% extends "global/Page.html" %}
+{% block title %}
+    Welcome
+{% endblock %}
+
+{% block content %}
+    <p>
+        Welcome to the experiment. To begin, please enter your name or a nickname below.
+        This will be used to identify you on the experimenter's monitor screen.
+    </p>
+
+    {% formfields %}
+
+    {% next_button %}
+{% endblock %}

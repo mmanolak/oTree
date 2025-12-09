@@ -15,6 +15,7 @@ class C(BaseConstants):
     BASE_REP_SUCCESS_PAYOFF = 50
     INDEFINITE_HORIZON_START_ROUND = 6
     CONTINUATION_PROBABILITY = 0.90
+    OPPOSITE_OUTCOME_PROB = 0.40 # 40% "chaos" probability
 
 class Subsession(BaseSubsession):
     rep_was_removed_this_round = models.BooleanField(initial=False)
@@ -171,18 +172,33 @@ class SyncAfterVote(WaitPage):
         return subsession.session.vars.get('current_rep_pid') is not None
     @staticmethod
     def after_all_players_arrive(subsession: Subsession):
-        # Treatment 2a Core Logic: Vote Counting
-        # This function counts the votes and determines if the representative is removed.
         active_group = next((g for g in subsession.get_groups() if len(g.get_players()) > 1), None)
         if active_group:
             rep = next((p for p in active_group.get_players() if p.is_active_rep), None)
             if rep:
-                # Count the number of "Replace" votes from the active voters.
+                # --- NEW LOGIC FOR TREATMENT 2b (CHAOS) ---
+
+                # 1. Count votes to determine the intended outcome
                 voters = [p for p in active_group.get_players() if p.is_voter]
                 replace_votes = sum(1 for v in voters if v.field_maybe_none('vote_choice') is True)
                 active_group.num_remove_votes = replace_votes
-                if replace_votes > (C.NUM_VOTERS / 2):
-                    # If a majority voted to replace, mark the rep for removal
+                
+                intended_to_be_removed = replace_votes > (C.NUM_VOTERS / 2)
+
+                # 2. Roll the die to see if the "opposite" outcome occurs
+                is_opposite_outcome = random.random() < C.OPPOSITE_OUTCOME_PROB 
+
+                # 3. Determine the final outcome
+                final_is_removed = False
+                if is_opposite_outcome:
+                    # The opposite of the intended outcome happens
+                    final_is_removed = not intended_to_be_removed
+                else:
+                    # The intended outcome happens
+                    final_is_removed = intended_to_be_removed
+                
+                # 4. If the final outcome is removal, update the state
+                if final_is_removed:
                     subsession.rep_was_removed_this_round = True
                     rep_pid = rep.participant.id
                     if rep_pid not in subsession.session.vars['removed_pids']:
