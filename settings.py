@@ -111,7 +111,7 @@ ROOMS = [
         name='econ_lab',
         display_name='Economics Lab Session',
         participant_label_file='_rooms/econ_lab.txt',
-        use_secure_urls=False
+        use_secure_urls=True
     ),
 ]
 
